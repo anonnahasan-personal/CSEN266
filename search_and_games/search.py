@@ -141,7 +141,7 @@ def breadthFirstSearch(problem):
                 if childState not in seen:
                     frontier.push(Node(childState, currentNode, action, currentNode.path_cost + problem.getCost(currentState, action)))
     return path
-
+    
 def depthFirstSearch(problem): 
 
     "*** YOUR CODE HERE ***"   
@@ -184,9 +184,60 @@ def UniformCostSearch(problem):
     
 
 def aStarSearch(problem, heuristic=nullHeuristic):
-    """Search the node that has the lowest combined cost and heuristic first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    path = []
+
+    # create priority queue for open nodes, set for closed nodes
+    openList = util.PriorityQueue()
+    closedList = {}
+
+    #add start node to frontier
+    startNode = Node(problem.getStartState(), None, None, 0)
+    gStart = startNode.path_cost
+    hStart = heuristic(startNode.state, problem)
+    fStart = gStart + hStart
+
+    #sort priority queue based on A* score to minimize expected cost of path
+    openList.push(startNode, fStart)
+
+    while not openList.isEmpty():
+        q = openList.pop()
+        qState = q.state
+
+        #keep track of path cost in case we need to update with better path
+        g = q.path_cost
+
+        #return path if current state is goal, continue search if not
+        if problem.goalTest(qState):
+            while q.parent is not None:
+                path.insert(0, q.action)
+                q = q.parent
+            return path
+        else:
+            actions = problem.getActions(qState)
+            for action in actions:
+                nextState = problem.getResult(qState, action)
+                stepCost = problem.getCost(qState, action)
+                successor = Node(nextState, q, action, stepCost + g)
+
+                gSuccessor = successor.path_cost
+                hSuccessor = heuristic(nextState, problem)
+                fSuccessor = gSuccessor + hSuccessor
+
+                #replace with smallest A* score if it isn't in closed
+                if successor.state not in closedList:
+                    openList.update(successor, fSuccessor)
+                #only need this portion for non-monotonic heuristic functions
+                #else:
+                #    if closedList[successor.state] > gSuccessor:
+                #        closedList.remove(successor.state)
+                #        openList.update(successor, fSuccessor)
+
+            #add current state to closed after looking at its successors
+            gFinal = q.path_cost
+            closedList[qState] = gFinal
+
+    #no optimal path found
+    return path
 
 # Abbreviations
 bfs = breadthFirstSearch
